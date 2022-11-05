@@ -1,0 +1,5 @@
+pytest
+fastapi
+sqlalchemy
+psycopg2-binary
+requests
