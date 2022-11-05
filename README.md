@@ -1,4 +1,3 @@
-# asyncio-python-backend
-asyncio 이해하기!
+# event driven architecture
 
-레퍼런스: python concurrency with asyncio(https://www.manning.com/books/python-concurrency-with-asyncio)
+레퍼런스: architecture patterns with python(https://www.amazon.com/Architecture-Patterns-Python-Domain-Driven-Microservices/dp/1492052205)
