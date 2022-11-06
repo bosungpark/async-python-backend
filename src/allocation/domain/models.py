@@ -1,3 +1,4 @@
+from collections import deque
 from datetime import date
 from typing import Optional, List
 
@@ -54,7 +55,7 @@ class Product:
         self.sku = sku
         self.batches = batches
         self.version_number = version_number
-        self.events : List[Event] = []
+        self.events : deque[Event] = deque()
 
     def allocate(self, line: OrderLine) -> str:
         try:

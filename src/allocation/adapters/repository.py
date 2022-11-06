@@ -6,37 +6,39 @@ from allocation.domain import models
 
 
 class AbstractRepository(abc.ABC):
-    @abc.abstractmethod
+
+    def __init__(self):
+        self.seen = set()
+
     def add(self, product: models.Product):
+        self._add(product)
+        self.seen.add(product)
+
+    def get(self, sku) -> models.Product:
+        product = self._get(sku)
+        if product:
+            self.seen.add(product)
+        return product
+
+    @abc.abstractmethod
+    def _add(self, product: models.Product):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get(self, sku) -> models.Product:
+    def _get(self, sku) -> models.Product:
         raise NotImplementedError
 
 
 class SqlAlchemyProductRepository(AbstractRepository):
     def __init__(self, session):
+        super().__init__()
         self.session :Session= session
 
-    def add(self, product):
+    def _add(self, product):
         self.session.add(product)
 
-    def get(self, sku):
+    def _get(self, sku):
         return self.session.query(models.Product).\
             filter_by(sku=sku).\
-            with_for_update().\
-            first()
-
-class SqlAlchemyBatchRepository(AbstractRepository):
-    def __init__(self, session):
-        self.session :Session= session
-
-    def add(self, batch):
-        self.session.add(batch)
-
-    def get(self, reference):
-        return self.session.query(models.Batch).\
-            filter_by(reference=reference).\
             with_for_update().\
             first()

@@ -5,10 +5,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 
 from allocation import config
-from allocation.adapters.repository import AbstractRepository, SqlAlchemyProductRepository, SqlAlchemyBatchRepository
+from allocation.adapters.repository import AbstractRepository, SqlAlchemyProductRepository
+from allocation.service_layer import messagebus
 
-
-DEFAULT_SESSION_FACTORY=sessionmaker(bind=create_engine(
+DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(
     config.get_postgres_uri(),
     isolation_level="REPEATABLE READ",
 ))
@@ -16,7 +16,6 @@ DEFAULT_SESSION_FACTORY=sessionmaker(bind=create_engine(
 
 class AbstractUnitOfWork(abc.ABC):
     products: AbstractRepository
-    batches: AbstractRepository
 
     def __exit__(self, *args):
         self.rollback()
@@ -24,8 +23,18 @@ class AbstractUnitOfWork(abc.ABC):
     def __enter__(self):
         return self
 
-    @abc.abstractmethod
     def commit(self):
+        self._commit()
+        self.publish_events()
+
+    def publish_events(self):
+        for product in self.products.seen:
+            while product.events:
+                event= product.events.popleft()
+                messagebus.handle(event)
+
+    @abc.abstractmethod
+    def _commit(self):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -40,14 +49,13 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
     def __enter__(self):
         self.session : Session= self.session_factory()
         self.products = SqlAlchemyProductRepository(self.session)
-        self.batches = SqlAlchemyBatchRepository(self.session)
         return super().__enter__()
 
     def __exit__(self, *args):
         super().__exit__(*args)
         self.session.close()
 
-    def commit(self):
+    def _commit(self):
         self.session.commit()
 
     def rollback(self):
