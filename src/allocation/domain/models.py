@@ -1,6 +1,8 @@
 from datetime import date
 from typing import Optional, List
 
+from allocation.domain import events
+from allocation.domain.events import Event
 from allocation.domain.exceptions import OutOfStock
 from allocation.domain.schemas import OrderLine
 from allocation.domain.types import Reference, SKU, Quantity
@@ -53,12 +55,14 @@ class Product:
         self.sku = sku
         self.batches = batches
         self.version_number = version_number
+        self.events : List[Event] = []
 
     def allocate(self, line: OrderLine) -> str:
         try:
             batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
             batch.allocate(line)
             self.version_number += 1
-            return batch.reference
         except StopIteration:
-            raise OutOfStock(f"Out of stock for sku {line.sku}")
+            self.events.append(events.OutOfStock(line.sku))
+        else:
+            return batch.reference
