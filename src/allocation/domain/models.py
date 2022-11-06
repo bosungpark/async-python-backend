@@ -3,7 +3,6 @@ from typing import Optional, List
 
 from allocation.domain import events
 from allocation.domain.events import Event
-from allocation.domain.exceptions import OutOfStock
 from allocation.domain.schemas import OrderLine
 from allocation.domain.types import Reference, SKU, Quantity
 
