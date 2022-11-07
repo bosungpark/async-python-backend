@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from allocation import config
 from allocation.adapters.repository import AbstractRepository, SqlAlchemyProductRepository
-from allocation.service_layer import messagebus
 
 DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(
     config.get_postgres_uri(),
@@ -25,13 +24,11 @@ class AbstractUnitOfWork(abc.ABC):
 
     def commit(self):
         self._commit()
-        self.publish_events()
 
-    def publish_events(self):
+    def collect_new_events(self):
         for product in self.products.seen:
             while product.events:
-                event= product.events.popleft()
-                messagebus.handle(event)
+                yield product.events.popleft()
 
     @abc.abstractmethod
     def _commit(self):

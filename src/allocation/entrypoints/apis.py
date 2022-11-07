@@ -9,8 +9,8 @@ from fastapi.params import Body
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
-from allocation.service_layer import services
-from allocation.service_layer.services import InvalidSku
+from allocation.service_layer import handlers
+from allocation.service_layer.handlers import InvalidSku
 from allocation.adapters.orm import start_mappers
 from allocation.adapters.repository import SqlAlchemyBatchRepository, AbstractRepository
 from allocation.config import get_postgres_uri
