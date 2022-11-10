@@ -12,7 +12,7 @@ class FakeProductRepository(AbstractRepository):
         self._products.add(product)
 
     def _get(self, sku):
-        return next(p for p in self._products if p.sku == sku)
+        return next((p for p in self._products if p.sku == sku), None)
 
     def list(self):
         return list(self._products)
