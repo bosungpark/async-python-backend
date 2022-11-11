@@ -4,8 +4,20 @@ from typing import Optional, List
 
 from allocation.domain import events
 from allocation.domain.events import Event
-from allocation.domain.schemas import OrderLine
+from allocation.domain.exceptions import OutOfStock
 from allocation.domain.types import Reference, SKU, Quantity
+
+from dataclasses import dataclass
+
+
+@dataclass
+class OrderLine:
+    orderid:str
+    sku: str
+    qty: int
+
+    def __hash__(self):
+        return hash(self.orderid)
 
 
 class Batch:
@@ -50,19 +62,23 @@ class Batch:
             return True
         return self.eta>other.eta
 
+
 class Product:
+    events: deque[Event] = deque()
+
     def __init__(self, sku: str, batches: List[Batch], version_number: int = 0):
         self.sku = sku
         self.batches = batches
         self.version_number = version_number
-        self.events : deque[Event] = deque()
 
     def allocate(self, line: OrderLine) -> str:
         try:
-            batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
+            batch = next((b for b in sorted(self.batches) if b.can_allocate(line)),None)
+            if not batch:
+                raise OutOfStock
             batch.allocate(line)
             self.version_number += 1
-        except StopIteration:
+        except OutOfStock:
             self.events.append(events.OutOfStock(line.sku))
         else:
             return batch.reference

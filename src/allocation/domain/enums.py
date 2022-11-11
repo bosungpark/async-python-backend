@@ -1,1 +1,1 @@
-#TODO
+#TODO: define types of enums

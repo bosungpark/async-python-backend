@@ -1,53 +1,61 @@
-"""
-run cmd: uvicorn src.allocation.entrypoints.api:app --host=127.0.0.1 --port=8000 --reload
-"""
 from datetime import datetime
 
+import uvicorn as uvicorn
 from fastapi import FastAPI
 from fastapi.params import Body
+from starlette import status
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-
-from allocation.service_layer import handlers
+from allocation.domain import events
+from allocation.domain.exceptions import OutOfStock
+from allocation.service_layer import messagebus, unit_of_work
 from allocation.service_layer.handlers import InvalidSku
 from allocation.adapters.orm import start_mappers
-from allocation.adapters.repository import SqlAlchemyBatchRepository, AbstractRepository
-from allocation.config import get_postgres_uri
-from allocation.domain.models import OutOfStock
 
-start_mappers()
-get_session = sessionmaker(bind=create_engine(get_postgres_uri()))
+
 app = FastAPI()
+start_mappers()
 
-@app.post("/allocate", status_code=201)
-def allocate_endpoint(data=Body()) -> dict:
-    orderid=data["orderid"]
-    sku=data["sku"]
-    qty=data["qty"]
-    session : Session = get_session()
-    repo : AbstractRepository = SqlAlchemyBatchRepository(session)
-    try:
-        batchref = services.allocate(orderid, sku, qty, repo, session)
-    except (InvalidSku, OutOfStock) as e:
-        return {"message": str(e),"status_code":400}
-    else:
-        return {"batchref" : batchref}
 
-@app.post("/batch", status_code=201)
+@app.post("/batch", status_code=status.HTTP_201_CREATED)
 def add_batch(data=Body()) -> str:
-    session : Session = get_session()
-    repo : AbstractRepository = SqlAlchemyBatchRepository(session)
+    """
+    api for add_batch
+    :param data:
+    :return:
+    """
     eta=data["eta"]
     if eta:
         eta=datetime.fromisoformat(eta).date()
 
-    services.add_batch(
-        data["ref"],
-        data["sku"],
-        data["qty"],
-        eta,
-        repo,
-        session
+    event = events.BatchCreated(
+        ref=data["ref"],
+        sku=data["sku"],
+        qty=data["qty"],
+        eta=eta
     )
-    return "OK"
+    messagebus.handle(event, unit_of_work.SqlAlchemyUnitOfWork())
+    return {"message": "OK","status_code":status.HTTP_201_CREATED}
+
+
+@app.post("/allocate", status_code=status.HTTP_201_CREATED)
+def allocate_endpoint(data=Body()) -> dict:
+    """
+    - api for allocate_endpoint
+    :param data:
+    :return:
+    """
+    try:
+        event = events.AllocationRequired(
+            orderid=data["orderid"],
+            sku=data["sku"],
+            qty=data["qty"]
+        )
+        results = messagebus.handle(event, unit_of_work.SqlAlchemyUnitOfWork())
+        batchref = results.pop(0)
+    except (InvalidSku, OutOfStock) as e:
+        return {"message": str(e),"status_code":status.HTTP_400_BAD_REQUEST}
+    else:
+        return {"batchref" : batchref, "status_code":status.HTTP_201_CREATED}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)

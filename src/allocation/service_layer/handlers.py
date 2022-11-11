@@ -1,10 +1,13 @@
-import email
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from allocation.domain import models, events
 from allocation.domain.models import SKU, Batch, OrderLine
 from allocation.service_layer import unit_of_work
 from allocation.service_layer.exceptions import InvalidSku
+from ..domain.exceptions import OutOfStock
+
+if TYPE_CHECKING:
+    from . import unit_of_work
 
 
 def is_valid_sku(sku: SKU, batches: List[Batch]) -> bool:
@@ -45,7 +48,6 @@ def send_out_of_stock_notification(event: events.OutOfStock,
                                    uow: unit_of_work.AbstractUnitOfWork,
 ) -> None:
     with uow:
-        email.send_mail(
-            "qkrqhtjd0806@naver.com",
-            f"Out Of Stock: {event.sku}",
-        )
+        #TODO: send mail!
+        print(f"Out Of Stock: {event.sku}")
+        raise OutOfStock(f'out of stock sku {event.sku}')

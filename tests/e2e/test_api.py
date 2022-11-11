@@ -1,19 +1,15 @@
-"""
-run cmd: uvicorn src.allocation.entrypoints.api:app --host=127.0.0.1 --port=8000 --reload
-"""
-
-import uuid
-
 import pytest
-import requests
+from starlette.testclient import TestClient
 
 from allocation import config
+from allocation.entrypoints.apis import app
 from ..random_refs import *
 
+client = TestClient(app)
 
 def post_to_add_batch(ref, sku, qty, eta):
     url = config.get_api_url()
-    r = requests.post(url=f"{url}/batch",
+    r = client.post(url=f"{url}/batch",
                       json={
                           "ref": ref,
                           "sku": sku,
@@ -36,7 +32,7 @@ def test_api_returns_allocation(add_stock):
 
     data={"orderid": random_orderid(), "sku": sku, "qty": 3}
     url= config.get_api_url()
-    r= requests.post(url=f"{url}/allocate", json=data)
+    r= client.post(url=f"{url}/allocate", json=data)
     assert r.status_code== 201
     assert r.json()["batchref"] == earlybatch
 
@@ -54,13 +50,14 @@ def test_api_returns_are_persisted(add_stock):
     line2 = {"orderid": order2, "sku": sku, "qty": 100}
     url= config.get_api_url()
 
-    r= requests.post(url=f"{url}/allocate", json=line1)
+    r= client.post(url=f"{url}/allocate", json=line1)
     assert r.status_code== 201
     assert r.json()["batchref"] == batch1
 
-    r = requests.post(url=f"{url}/allocate", json=line2)
+    r = client.post(url=f"{url}/allocate", json=line2)
     assert r.status_code == 201
     assert r.json()["batchref"] == batch2
+
 
 @pytest.mark.usefixtures("restart_api")
 def test_400_for_out_of_stock(add_stock):
@@ -69,9 +66,10 @@ def test_400_for_out_of_stock(add_stock):
     data={"orderid": large_order, "sku": sku, "qty": 100}
     url = config.get_api_url()
 
-    r = requests.post(url=f"{url}/allocate", json=data)
+    r = client.post(url=f"{url}/allocate", json=data)
     assert r.json()["status_code"] == 400
     assert r.json()["message"] == f"out of stock sku {sku}"
+
 
 @pytest.mark.usefixtures("postgres_db")
 @pytest.mark.usefixtures("restart_api")
@@ -80,6 +78,6 @@ def test_400_for_invalid_sku(add_stock):
     data={"orderid": orderid, "sku": unknown_sku, "qty": 100}
     url = config.get_api_url()
 
-    r = requests.post(url=f"{url}/allocate", json=data)
+    r = client.post(url=f"{url}/allocate", json=data)
     assert r.json()["status_code"] == 400
     assert r.json()["message"] == f"Invalid sku {unknown_sku}"
