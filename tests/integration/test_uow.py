@@ -6,10 +6,9 @@ import pytest
 from sqlalchemy.orm import Session
 
 from allocation.domain import models
-from allocation.domain.models import OrderLine
 from allocation.service_layer import unit_of_work
 from allocation.service_layer.unit_of_work import SqlAlchemyUnitOfWork
-from tests.random_refs import *
+from tests.helpers import random_refs
 
 
 def insert_batch(session:Session, ref, sku, qty, eta):
@@ -77,12 +76,12 @@ def insert_batch_with_product_version(session:Session, ref, sku, qty, eta,  prod
     )
 
 def test_concurrent_updates_to_version_are_not_allowed(postgres_session_factory):
-    sku, batch = random_sku(), random_batchref()
+    sku, batch = random_refs.random_sku(), random_refs.random_batchref()
     session = postgres_session_factory()
     insert_batch_with_product_version(session, batch, sku, 100, eta=None, product_version=1)
     session.commit()
 
-    order1, order2 = random_orderid(1), random_orderid(2)
+    order1, order2 = random_refs.random_orderid(1), random_refs.random_orderid(2)
     exceptions = []  # type: List[Exception]
     try_to_allocate_order1 = lambda: try_to_allocate(order1, sku, exceptions)
     try_to_allocate_order2 = lambda: try_to_allocate(order2, sku, exceptions)
