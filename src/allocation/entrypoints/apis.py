@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.params import Body
 from starlette import status
 
-from allocation.domain import events
+from allocation.domain import commands
 from allocation.domain.exceptions import OutOfStock
 from allocation.service_layer import messagebus, unit_of_work
 from allocation.service_layer.handlers import InvalidSku
@@ -19,7 +19,7 @@ start_mappers()
 @app.post("/batch", status_code=status.HTTP_201_CREATED)
 def creat_batch(data=Body()) -> str:
     """
-    api for add_batch
+    api for creat_batch
     :param data:
     :return:
     """
@@ -27,35 +27,36 @@ def creat_batch(data=Body()) -> str:
     if eta:
         eta=datetime.fromisoformat(eta).date()
 
-    event = events.BatchCreated(
+    command = commands.CreateBatch(
         ref=data["ref"],
         sku=data["sku"],
         qty=data["qty"],
         eta=eta
     )
-    messagebus.handle(event, unit_of_work.SqlAlchemyUnitOfWork())
+    messagebus.handle(command, unit_of_work.SqlAlchemyUnitOfWork())
     return {"message": "OK","status_code":status.HTTP_201_CREATED}
 
 
 @app.post("/allocate", status_code=status.HTTP_201_CREATED)
 def allocate(data=Body()) -> dict:
     """
-    - api for allocate_endpoint
+    - api for allocate
     :param data:
     :return:
     """
     try:
-        event = events.AllocationRequired(
+        command = commands.Allocate(
             orderid=data["orderid"],
             sku=data["sku"],
             qty=data["qty"]
         )
-        results = messagebus.handle(event, unit_of_work.SqlAlchemyUnitOfWork())
+        results = messagebus.handle(command, unit_of_work.SqlAlchemyUnitOfWork())
         batchref = results.pop(0)
     except (InvalidSku, OutOfStock) as e:
         return {"message": str(e),"status_code":status.HTTP_400_BAD_REQUEST}
     else:
         return {"batchref" : batchref, "status_code":status.HTTP_201_CREATED}
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
