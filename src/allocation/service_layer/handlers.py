@@ -44,10 +44,20 @@ def add_batch(
         uow.commit()
 
 
+def change_batch_quantity(
+    event: events.BatchQuantityChanged,
+    uow: unit_of_work.AbstractUnitOfWork,
+):
+    with uow:
+        product = uow.products.get_by_batchref(batchref=event.ref)
+        product.change_batch_quantity(ref=event.ref, qty=event.qty)
+        uow.commit()
+
+
 def send_out_of_stock_notification(event: events.OutOfStock,
                                    uow: unit_of_work.AbstractUnitOfWork,
 ) -> None:
     with uow:
-        #TODO: send mail!
+        #TODO: send actual mail!
         print(f"Out Of Stock: {event.sku}")
         raise OutOfStock(f'out of stock sku {event.sku}')

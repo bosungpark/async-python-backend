@@ -1,4 +1,5 @@
 from allocation.adapters.repository import AbstractRepository
+from allocation.domain import models
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 
@@ -14,6 +15,8 @@ class FakeProductRepository(AbstractRepository):
     def _get(self, sku):
         return next((p for p in self._products if p.sku == sku), None)
 
+    def _get_by_batchref(self, batchref) -> models.Product:
+        return next((p for p in self._products for b in p.batches if b.reference == batchref), None)
     def list(self):
         return list(self._products)
 
