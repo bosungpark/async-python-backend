@@ -77,6 +77,14 @@ class Product:
                 raise OutOfStock
             batch.allocate(line)
             self.version_number += 1
+            self.events.append(
+                events.Allocated(
+                    orderid=line.orderid,
+                    sku=line.sku,
+                    qty=line.qty,
+                    batchref=batch.reference,
+                )
+            )
         except OutOfStock:
             self.events.append(events.OutOfStock(line.sku))
         else:

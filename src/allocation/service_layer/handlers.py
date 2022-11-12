@@ -5,7 +5,7 @@ from allocation.domain.models import SKU, Batch, OrderLine
 from allocation.service_layer import unit_of_work
 from allocation.service_layer.exceptions import InvalidSku
 from ..domain.exceptions import OutOfStock
-
+from ..entrypoints import redis_eventconsumer
 
 if TYPE_CHECKING:
     from . import unit_of_work
@@ -16,8 +16,8 @@ def is_valid_sku(sku: SKU, batches: List[Batch]) -> bool:
 
 
 def allocate(
-    command: commands.Allocate,
-    uow: unit_of_work.AbstractUnitOfWork,
+        command: commands.Allocate,
+        uow: unit_of_work.AbstractUnitOfWork,
 ) -> str:
     line = OrderLine(command.orderid, command.sku, command.qty)
     with uow:
@@ -30,8 +30,8 @@ def allocate(
 
 
 def add_batch(
-    command: commands.CreateBatch,
-    uow: unit_of_work.AbstractUnitOfWork,
+        command: commands.CreateBatch,
+        uow: unit_of_work.AbstractUnitOfWork,
 ) -> None:
     with uow:
         product = uow.products.get(sku=command.sku)
@@ -46,8 +46,8 @@ def add_batch(
 
 
 def change_batch_quantity(
-    command: commands.ChangeBatchQuantity,
-    uow: unit_of_work.AbstractUnitOfWork,
+        command: commands.ChangeBatchQuantity,
+        uow: unit_of_work.AbstractUnitOfWork,
 ):
     with uow:
         product = uow.products.get_by_batchref(batchref=command.ref)
@@ -62,3 +62,11 @@ def send_out_of_stock_notification(event: events.OutOfStock,
         #TODO: send actual mail!
         print(f"Out Of Stock: {event.sku}")
         raise OutOfStock(f'out of stock sku {event.sku}')
+
+
+def publish_allocated_event(
+        event: events.Allocated,
+        uow: unit_of_work.AbstractUnitOfWork
+):
+    with uow:
+        redis_eventconsumer.publish("line_allocated", event)

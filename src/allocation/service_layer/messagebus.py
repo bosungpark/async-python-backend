@@ -34,16 +34,11 @@ def handle_event(event: events.Event,
                  uow: unit_of_work.AbstractUnitOfWork):
     for handler in EVENT_HANDLERS[type(event)]:
         try:
-            for attempt in Retrying(
-                stop=stop_after_attempt(3),
-                wait=wait_exponential()
-            ):
-                with attempt:
-                    logger.debug(f"Handling {event} with handler {handler}")
-                    handler(event,uow=uow)
-                    queue.extend(uow.collect_new_events())
-        except RetryError as retry_failure:
-            logger.exception(f"Failed to handle exception after trying {retry_failure.last_attempt.attempt_number} times")
+            logger.debug(f"Handling {event} with handler {handler}")
+            handler(event,uow=uow)
+            queue.extend(uow.collect_new_events())
+        except Exception as e:
+            logger.exception(f"Failed to handle exception: {e}!")
             continue
 
 
@@ -62,6 +57,7 @@ def handle_command(command: commands.Command,
 
 
 EVENT_HANDLERS = {
+    events.Allocated: [handlers.publish_allocated_event],
     events.OutOfStock: [handlers.send_out_of_stock_notification],
 }
 

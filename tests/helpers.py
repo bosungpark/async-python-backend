@@ -9,14 +9,11 @@ class _RandomRefs:
     def random_suffix(self):
         return uuid.uuid4().hex[:6]
 
-
     def random_sku(self, name=""):
         return f"sku-{name}-{self.random_suffix()}"
 
-
     def random_batchref(self,name=""):
         return f"batch-{name}-{self.random_suffix()}"
-
 
     def random_orderid(self,name=""):
         return f"order-{name}-{self.random_suffix()}"
@@ -26,13 +23,13 @@ class _APIClient:
     def post_to_add_batch(self, ref, sku, qty, eta):
         url = config.get_api_url()
         r = requests.post(
-            f"{url}/add_batch", json={"ref": ref, "sku": sku, "qty": qty, "eta": eta}
+            f"{url}/batch", json={"ref": ref, "sku": sku, "qty": qty, "eta": eta}
         )
         assert r.status_code == 201
 
     def post_to_allocate(self, orderid, sku, qty, expect_success=True):
         url = config.get_api_url()
-        r = requests.post(
+        response = requests.post(
             f"{url}/allocate",
             json={
                 "orderid": orderid,
@@ -41,8 +38,8 @@ class _APIClient:
             },
         )
         if expect_success:
-            assert r.status_code == 201
-        return
+            assert response.status_code == 201
+        return response
 
 
 r = redis.Redis(**config.get_redis_host_and_port())
