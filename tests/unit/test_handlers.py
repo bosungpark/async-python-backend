@@ -2,7 +2,7 @@ import pytest
 
 from datetime import date
 
-from allocation.domain import events
+from allocation.domain import events, commands
 from allocation.service_layer import messagebus
 from tests.fakes import FakeUnitOfWork
 
@@ -11,7 +11,7 @@ class TestAddBatch:
     def test_add_batch(self):
         uow = FakeUnitOfWork()
         messagebus.handle(
-            events.BatchCreated(
+            commands.CreateBatch(
                 "o1", "LAMP-1", 10, None
             ),
             uow = uow
@@ -25,14 +25,14 @@ class TestAllocate:
     def test_returns_allocation(self):
         uow = FakeUnitOfWork()
         messagebus.handle(
-            events.BatchCreated(
+            commands.CreateBatch(
                 "b1", "LAMP", 100, eta=None
             ),
             uow=uow
         )
 
         [result] = messagebus.handle(
-            events.AllocationRequired(
+            commands.Allocate(
                 "b1", "LAMP", 100
             ),
             uow=uow
@@ -45,22 +45,22 @@ class TestChangeBatchQuantity:
     def test_changes_available_quantity(self):
         uow = FakeUnitOfWork()
         messagebus.handle(
-            events.BatchCreated("batch1", "ADORABLE-SETTEE", 100, None), uow
+            commands.CreateBatch("batch1", "ADORABLE-SETTEE", 100, None), uow
         )
         [batch] = uow.products.get(sku="ADORABLE-SETTEE").batches
         assert batch.available_quantity == 100
 
-        messagebus.handle(events.BatchQuantityChanged("batch1", 50), uow)
+        messagebus.handle(commands.ChangeBatchQuantity("batch1", 50), uow)
 
         assert batch.available_quantity == 50
 
     def test_reallocates_if_necessary(self):
         uow = FakeUnitOfWork()
         event_history = [
-            events.BatchCreated("batch1", "INDIFFERENT-TABLE", 50, None),
-            events.BatchCreated("batch2", "INDIFFERENT-TABLE", 50, date.today()),
-            events.AllocationRequired("order1", "INDIFFERENT-TABLE", 20),
-            events.AllocationRequired("order2", "INDIFFERENT-TABLE", 20),
+            commands.CreateBatch("batch1", "INDIFFERENT-TABLE", 50, None),
+            commands.CreateBatch("batch2", "INDIFFERENT-TABLE", 50, date.today()),
+            commands.Allocate("order1", "INDIFFERENT-TABLE", 20),
+            commands.Allocate("order2", "INDIFFERENT-TABLE", 20),
         ]
         for e in event_history:
             messagebus.handle(e, uow)
@@ -68,7 +68,7 @@ class TestChangeBatchQuantity:
         assert batch1.available_quantity == 10
         assert batch2.available_quantity == 50
 
-        messagebus.handle(events.BatchQuantityChanged("batch1", 25), uow)
+        messagebus.handle(commands.ChangeBatchQuantity("batch1", 25), uow)
 
         assert batch1.available_quantity == 5
         assert batch2.available_quantity == 30

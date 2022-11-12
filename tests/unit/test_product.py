@@ -1,9 +1,7 @@
 from datetime import date, timedelta
 
 from allocation.domain import events
-from allocation.domain.models import Batch, Product
-from allocation.domain.schemas import OrderLine
-
+from allocation.domain.models import Batch, Product, OrderLine
 
 today = date.today()
 tomorrow = today + timedelta(days=1)

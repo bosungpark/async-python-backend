@@ -3,7 +3,6 @@ from allocation.domain import models
 from allocation.service_layer.unit_of_work import AbstractUnitOfWork
 
 
-
 class FakeProductRepository(AbstractRepository):
     def __init__(self, products):
         super().__init__()
