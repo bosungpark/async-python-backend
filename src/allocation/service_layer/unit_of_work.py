@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from allocation import config
 from allocation.adapters.repository import AbstractRepository, SqlAlchemyProductRepository
 
+
 DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(
     config.get_postgres_uri(),
     isolation_level="REPEATABLE READ",

@@ -7,6 +7,8 @@ from allocation.service_layer import handlers
 
 import logging
 
+from tenacity import  Retrying, RetryError, stop_after_attempt, wait_exponential
+
 Message = Union[commands.Command, events.Event]
 logger = logging.getLogger(__name__)
 
@@ -32,11 +34,16 @@ def handle_event(event: events.Event,
                  uow: unit_of_work.AbstractUnitOfWork):
     for handler in EVENT_HANDLERS[type(event)]:
         try:
-            logger.debug(f"Handling {event} with handler {handler}")
-            handler(event,uow=uow)
-            queue.extend(uow.collect_new_events())
-        except Exception:
-            logger.exception(f"Exception handling event: {event}")
+            for attempt in Retrying(
+                stop=stop_after_attempt(3),
+                wait=wait_exponential()
+            ):
+                with attempt:
+                    logger.debug(f"Handling {event} with handler {handler}")
+                    handler(event,uow=uow)
+                    queue.extend(uow.collect_new_events())
+        except RetryError as retry_failure:
+            logger.exception(f"Failed to handle exception after trying {retry_failure.last_attempt.attempt_number} times")
             continue
 
 
