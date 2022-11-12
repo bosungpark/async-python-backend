@@ -1,1 +1,6 @@
-#TODO: define types of enums
+from enum import Enum
+
+
+class CoffeeBean(Enum):
+    COFFEE = "coffee"
+    BEAN = "bean"

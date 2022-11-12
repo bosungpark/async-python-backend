@@ -17,7 +17,7 @@ start_mappers()
 
 
 @app.post("/batch", status_code=status.HTTP_201_CREATED)
-def add_batch(data=Body()) -> str:
+def creat_batch(data=Body()) -> str:
     """
     api for add_batch
     :param data:
@@ -38,7 +38,7 @@ def add_batch(data=Body()) -> str:
 
 
 @app.post("/allocate", status_code=status.HTTP_201_CREATED)
-def allocate_endpoint(data=Body()) -> dict:
+def allocate(data=Body()) -> dict:
     """
     - api for allocate_endpoint
     :param data:
