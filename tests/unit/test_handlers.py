@@ -2,7 +2,7 @@ import pytest
 
 from datetime import date
 
-from allocation.domain import events, commands
+from allocation.domain import commands
 from allocation.service_layer import messagebus
 from tests.fakes import FakeUnitOfWork
 

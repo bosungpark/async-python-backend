@@ -18,6 +18,11 @@ class _RandomRefs:
     def random_orderid(self,name=""):
         return f"order-{name}-{self.random_suffix()}"
 
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, "_instance"):
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
 
 class _APIClient:
     def post_to_add_batch(self, ref, sku, qty, eta):
@@ -41,6 +46,11 @@ class _APIClient:
             assert response.status_code == 201
         return response
 
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, "_instance"):
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
 
 r = redis.Redis(**config.get_redis_host_and_port())
 
@@ -54,6 +64,11 @@ class _RedisClient:
 
     def publish_message(self, channel, message):
         r.publish(channel, json.dumps(message))
+
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, "_instance"):
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
 
 random_refs = _RandomRefs()

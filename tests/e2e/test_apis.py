@@ -5,7 +5,9 @@ from allocation import config
 from allocation.entrypoints.apis import app
 from ..helpers import random_refs
 
+
 client = TestClient(app)
+
 
 def post_to_add_batch(ref, sku, qty, eta):
     url = config.get_api_url()
@@ -17,6 +19,7 @@ def post_to_add_batch(ref, sku, qty, eta):
                           "eta": eta
                       })
     assert r.status_code == 201
+
 
 @pytest.mark.usefixtures("postgres_db")
 @pytest.mark.usefixtures("restart_api")
@@ -35,6 +38,7 @@ def test_api_returns_allocation(add_stock):
     r= client.post(url=f"{url}/allocate", json=data)
     assert r.status_code== 201
     assert r.json()["batchref"] == earlybatch
+
 
 @pytest.mark.usefixtures("postgres_db")
 @pytest.mark.usefixtures("restart_api")

@@ -7,7 +7,6 @@ from allocation.service_layer import handlers
 
 import logging
 
-from tenacity import  Retrying, RetryError, stop_after_attempt, wait_exponential
 
 Message = Union[commands.Command, events.Event]
 logger = logging.getLogger(__name__)
