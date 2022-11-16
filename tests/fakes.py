@@ -16,6 +16,7 @@ class FakeProductRepository(AbstractRepository):
 
     def _get_by_batchref(self, batchref) -> models.Product:
         return next((p for p in self._products for b in p.batches if b.reference == batchref), None)
+
     def list(self):
         return list(self._products)
 

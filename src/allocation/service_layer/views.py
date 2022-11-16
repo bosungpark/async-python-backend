@@ -6,8 +6,8 @@ def allocations(orderid: str,
     with uow:
         results = list(uow.session.execute(
             """
-                        SELECT sku, batchref FROM allocations_view WHERE orderid = :orderid
-                        """,
+            SELECT sku, batchref FROM allocations_view WHERE orderid = :orderid
+            """,
             dict(orderid=orderid),
         ))
     return [dict(r) for r in results]
