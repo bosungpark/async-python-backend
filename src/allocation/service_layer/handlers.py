@@ -85,3 +85,17 @@ def add_allocation_to_read_model(
             dict(orderid=event.orderid, sku=event.sku, batchref=event.batchref),
         )
         uow.commit()
+
+
+EVENT_HANDLERS = {
+    events.Allocated: [publish_allocated_event,
+                       add_allocation_to_read_model],
+    events.OutOfStock: [send_out_of_stock_notification],
+}
+
+
+COMMAND_HANDLERS = {
+    commands.CreateBatch: add_batch,
+    commands.Allocate: allocate,
+    commands.ChangeBatchQuantity: change_batch_quantity
+}
