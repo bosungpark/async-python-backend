@@ -8,54 +8,51 @@ from tests.fakes import FakeUnitOfWork
 
 
 class TestAddBatch:
-    def test_add_batch(self):
-        uow = FakeUnitOfWork()
+    def test_add_batch(self, bootstrap_for_test):
+        messagebus = bootstrap_for_test
         messagebus.handle(
             commands.CreateBatch(
                 "o1", "LAMP-1", 10, None
             ),
-            uow = uow
         )
 
-        assert uow.products.get("LAMP-1") is not None
-        assert uow.committed
+        assert messagebus.uow.products.get("LAMP-1") is not None
+        assert messagebus.uow.committed
 
 
 class TestAllocate:
-    def test_returns_allocation(self):
-        uow = FakeUnitOfWork()
+    def test_returns_allocation(self, bootstrap_for_test):
+        messagebus = bootstrap_for_test
         messagebus.handle(
             commands.CreateBatch(
                 "b1", "LAMP", 100, eta=None
             ),
-            uow=uow
         )
 
         [result] = messagebus.handle(
             commands.Allocate(
                 "b1", "LAMP", 100
             ),
-            uow=uow
         )
 
         assert result == "b1"
 
 
 class TestChangeBatchQuantity:
-    def test_changes_available_quantity(self):
-        uow = FakeUnitOfWork()
+    def test_changes_available_quantity(self, bootstrap_for_test):
+        messagebus = bootstrap_for_test
         messagebus.handle(
-            commands.CreateBatch("batch1", "ADORABLE-SETTEE", 100, None), uow
+            commands.CreateBatch("batch1", "ADORABLE-SETTEE", 100, None)
         )
-        [batch] = uow.products.get(sku="ADORABLE-SETTEE").batches
+        [batch] = messagebus.uow.products.get(sku="ADORABLE-SETTEE").batches
         assert batch.available_quantity == 100
 
-        messagebus.handle(commands.ChangeBatchQuantity("batch1", 50), uow)
+        messagebus.handle(commands.ChangeBatchQuantity("batch1", 50))
 
         assert batch.available_quantity == 50
 
-    def test_reallocates_if_necessary(self):
-        uow = FakeUnitOfWork()
+    def test_reallocates_if_necessary(self, bootstrap_for_test):
+        messagebus = bootstrap_for_test
         event_history = [
             commands.CreateBatch("batch1", "INDIFFERENT-TABLE", 50, None),
             commands.CreateBatch("batch2", "INDIFFERENT-TABLE", 50, date.today()),
@@ -63,12 +60,12 @@ class TestChangeBatchQuantity:
             commands.Allocate("order2", "INDIFFERENT-TABLE", 20),
         ]
         for e in event_history:
-            messagebus.handle(e, uow)
-        [batch1, batch2] = uow.products.get(sku="INDIFFERENT-TABLE").batches
+            messagebus.handle(e)
+        [batch1, batch2] = messagebus.uow.products.get(sku="INDIFFERENT-TABLE").batches
         assert batch1.available_quantity == 10
         assert batch2.available_quantity == 50
 
-        messagebus.handle(commands.ChangeBatchQuantity("batch1", 25), uow)
+        messagebus.handle(commands.ChangeBatchQuantity("batch1", 25))
 
         assert batch1.available_quantity == 5
         assert batch2.available_quantity == 30
