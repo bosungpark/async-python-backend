@@ -5,7 +5,7 @@ from dataclasses import asdict
 import redis
 
 from allocation import config
-from allocation.domain import commands, events
+from allocation.domain import commands
 from allocation.adapters import orm
 from allocation.service_layer import messagebus, unit_of_work
 
@@ -28,11 +28,6 @@ def handle_change_batch_quantity(m):
     data = json.loads(m["data"])
     cmd = commands.ChangeBatchQuantity(ref=data["batchref"], qty=data["qty"])
     messagebus.handle(cmd, uow=unit_of_work.SqlAlchemyUnitOfWork())
-
-
-def publish(channel, event: events.Event):
-    logging.debug(f"Publishing: channel={channel}, event={event}!")
-    r.publish(channel, json.dumps(asdict(event)))
 
 
 if __name__ == "__main__":

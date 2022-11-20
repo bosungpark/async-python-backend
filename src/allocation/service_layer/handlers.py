@@ -5,7 +5,7 @@ from allocation.domain.models import SKU, Batch, OrderLine
 from allocation.service_layer import unit_of_work
 from allocation.service_layer.exceptions import InvalidSku
 from ..domain.exceptions import OutOfStock
-from ..entrypoints import redis_eventconsumer
+from ..entrypoints import redis_eventconsumer, redis_eventpublisher
 
 if TYPE_CHECKING:
     from . import unit_of_work
@@ -69,7 +69,7 @@ def publish_allocated_event(
         uow: unit_of_work.AbstractUnitOfWork
 ):
     with uow:
-        redis_eventconsumer.publish("line_allocated", event)
+        redis_eventpublisher.publish("line_allocated", event)
 
 
 def add_allocation_to_read_model(
