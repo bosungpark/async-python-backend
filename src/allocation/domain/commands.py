@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
+from allocation.domain.types import Reference, SKU, Quantity
+
 
 class Command:
     pass
@@ -16,9 +18,9 @@ class Allocate(Command):
 
 @dataclass
 class CreateBatch(Command):
-    ref: str
-    sku: str
-    qty: int
+    ref: Reference
+    sku: SKU
+    qty: Quantity
     eta: Optional[date] = None
 
 

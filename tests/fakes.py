@@ -11,13 +11,13 @@ class FakeProductRepository(AbstractRepository):
     def _add(self, product):
         self._products.add(product)
 
-    def _get(self, sku):
+    async def _get(self, sku):
         return next((p for p in self._products if p.sku == sku), None)
 
-    def _get_by_batchref(self, batchref) -> models.Product:
+    async def _get_by_batchref(self, batchref) -> models.Product:
         return next((p for p in self._products for b in p.batches if b.reference == batchref), None)
 
-    def list(self):
+    async def list(self):
         return list(self._products)
 
 
@@ -26,8 +26,8 @@ class FakeUnitOfWork(AbstractUnitOfWork):
         self.products = FakeProductRepository([])
         self.committed = False
 
-    def _commit(self):
+    async def _commit(self):
         self.committed = True
 
-    def rollback(self):
+    async def rollback(self):
         pass

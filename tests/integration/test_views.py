@@ -4,7 +4,7 @@ from allocation.domain import commands
 from allocation.service_layer import  views
 
 
-def test_allocations_view(messagebus_for_test):
+async def test_allocations_view(messagebus_for_test):
     messagebus_for_test.handle(message=commands.CreateBatch("sku1batch", "sku1", 50, None))
     messagebus_for_test.handle(message=commands.CreateBatch("sku2batch", "sku2", 50, date.today()))
     messagebus_for_test.handle(message=commands.Allocate("order1", "sku1", 20))

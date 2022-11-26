@@ -11,14 +11,14 @@ from allocation.service_layer.unit_of_work import SqlAlchemyUnitOfWork
 from tests.helpers import random_refs
 
 
-def insert_batch(session:Session, ref, sku, qty, eta):
+async def insert_batch(session:Session, ref, sku, qty, eta):
     session.execute(
         "INSERT INTO batches (reference, sku, _purchased_quantity, eta)"
         " VALUES (:ref, :sku, :qty, :eta)",
         dict(ref=ref, sku=sku, qty=qty, eta=eta)
     )
 
-def get_allocated_batch_ref(session:Session, orderid, sku):
+async def get_allocated_batch_ref(session:Session, orderid, sku):
     [[orderlineid]]=session.execute(
         "SELECT id FROM order_lines WHERE orderid= :orderid AND sku= :sku",
         dict(orderid=orderid,sku=sku)
@@ -30,7 +30,7 @@ def get_allocated_batch_ref(session:Session, orderid, sku):
     )
     return batchref
 
-def test_rolls_back_uncommited_work_by_default(session_factory):
+async def test_rolls_back_uncommited_work_by_default(session_factory):
     uow = SqlAlchemyUnitOfWork(session_factory)
     with uow:
         insert_batch(uow.session,"b1", "plinth", 100, None)
@@ -39,7 +39,7 @@ def test_rolls_back_uncommited_work_by_default(session_factory):
     rows=list(new_sesson.execute("SELECT * FROM 'batches'"))
     assert rows==[]
 
-def test_rolls_back_on_error(session_factory):
+async def test_rolls_back_on_error(session_factory):
     class MyException(Exception):
         pass
 
@@ -52,7 +52,7 @@ def test_rolls_back_on_error(session_factory):
     rows=list(new_sesson.execute("SELECT * FROM 'batches'"))
     assert rows==[]
 
-def try_to_allocate(orderid, sku, exceptions):
+async def try_to_allocate(orderid, sku, exceptions):
     line = models.OrderLine(orderid, sku, 10)
     try:
         with unit_of_work.SqlAlchemyUnitOfWork() as uow:
@@ -64,7 +64,7 @@ def try_to_allocate(orderid, sku, exceptions):
         print(traceback.format_exc())
         exceptions.append(e)
 
-def insert_batch_with_product_version(session:Session, ref, sku, qty, eta,  product_version=1):
+async def insert_batch_with_product_version(session:Session, ref, sku, qty, eta,  product_version=1):
     session.execute(
         "INSERT INTO products (sku, version_number) VALUES (:sku, :version)",
         dict(sku=sku, version=product_version),
@@ -75,7 +75,7 @@ def insert_batch_with_product_version(session:Session, ref, sku, qty, eta,  prod
         dict(ref=ref, sku=sku, qty=qty, eta=eta),
     )
 
-def test_concurrent_updates_to_version_are_not_allowed(postgres_session_factory):
+async def test_concurrent_updates_to_version_are_not_allowed(postgres_session_factory):
     sku, batch = random_refs.random_sku(), random_refs.random_batchref()
     session = postgres_session_factory()
     insert_batch_with_product_version(session, batch, sku, 100, eta=None, product_version=1)

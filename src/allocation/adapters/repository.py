@@ -15,14 +15,14 @@ class AbstractRepository(abc.ABC):
         self._add(product)
         self.seen.add(product)
 
-    def get(self, sku) -> models.Product:
-        product = self._get(sku)
+    async def get(self, sku) -> models.Product:
+        product = await self._get(sku)
         if product:
             self.seen.add(product)
         return product
 
-    def get_by_batchref(self, batchref) -> models.Product:
-        product = self._get_by_batchref(batchref)
+    async def get_by_batchref(self, batchref) -> models.Product:
+        product = await self._get_by_batchref(batchref)
         if product:
             self.seen.add(product)
         return product
@@ -32,11 +32,11 @@ class AbstractRepository(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _get(self, sku) -> models.Product:
+    async def _get(self, sku) -> models.Product:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _get_by_batchref(self, batchref) -> models.Product:
+    async def _get_by_batchref(self, batchref) -> models.Product:
         raise NotImplementedError
 
 
@@ -48,14 +48,14 @@ class SqlAlchemyProductRepository(AbstractRepository):
     def _add(self, product):
         self.session.add(product)
 
-    def _get(self, sku):
-        return self.session.query(models.Product).\
+    async def _get(self, sku):
+        return await self.session.query(models.Product).\
             filter_by(sku=sku).\
             with_for_update().\
             first()
 
-    def _get_by_batchref(self, batchref) -> models.Product:
-        return (
+    async def _get_by_batchref(self, batchref) -> models.Product:
+        return await (
             self.session.query(models.Product)
                 .join(models.Batch)
                 .filter(orm.batches.c.reference == batchref)

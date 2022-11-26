@@ -8,7 +8,7 @@ from tests.fakes import FakeUnitOfWork
 
 
 class TestAddBatch:
-    def test_add_batch(self, bootstrap_for_test):
+    async def test_add_batch(self, bootstrap_for_test):
         messagebus = bootstrap_for_test
         messagebus.handle(
             commands.CreateBatch(
@@ -21,7 +21,7 @@ class TestAddBatch:
 
 
 class TestAllocate:
-    def test_returns_allocation(self, bootstrap_for_test):
+    async def test_returns_allocation(self, bootstrap_for_test):
         messagebus = bootstrap_for_test
         messagebus.handle(
             commands.CreateBatch(
@@ -39,7 +39,7 @@ class TestAllocate:
 
 
 class TestChangeBatchQuantity:
-    def test_changes_available_quantity(self, bootstrap_for_test):
+    async def test_changes_available_quantity(self, bootstrap_for_test):
         messagebus = bootstrap_for_test
         messagebus.handle(
             commands.CreateBatch("batch1", "ADORABLE-SETTEE", 100, None)
@@ -51,7 +51,7 @@ class TestChangeBatchQuantity:
 
         assert batch.available_quantity == 50
 
-    def test_reallocates_if_necessary(self, bootstrap_for_test):
+    async def test_reallocates_if_necessary(self, bootstrap_for_test):
         messagebus = bootstrap_for_test
         event_history = [
             commands.CreateBatch("batch1", "INDIFFERENT-TABLE", 50, None),

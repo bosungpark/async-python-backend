@@ -17,13 +17,13 @@ DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(
 class AbstractUnitOfWork(abc.ABC):
     products: AbstractRepository
 
-    def __exit__(self, *args):
+    async def __aexit__(self, *args):
         self.rollback()
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def commit(self):
+    async def commit(self):
         self._commit()
 
     def collect_new_events(self):
@@ -44,17 +44,17 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
     def __init__(self, session_factory=DEFAULT_SESSION_FACTORY):
         self.session_factory=session_factory
 
-    def __enter__(self):
+    async def __aenter__(self):
         self.session : Session= self.session_factory()
         self.products = SqlAlchemyProductRepository(self.session)
-        return super().__enter__()
+        return await super().__aenter__()
 
-    def __exit__(self, *args):
-        super().__exit__(*args)
-        self.session.close()
+    async def __aexit__(self, *args):
+        await super().__aexit__(*args)
+        await self.session.close()
 
-    def _commit(self):
-        self.session.commit()
+    async def _commit(self):
+        await self.session.commit()
 
-    def rollback(self):
-        self.session.rollback()
+    async def rollback(self):
+        await self.session.rollback()

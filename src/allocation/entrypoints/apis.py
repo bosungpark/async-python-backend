@@ -8,7 +8,7 @@ from starlette import status
 from allocation import bootstrap
 from allocation.domain import commands
 from allocation.domain.exceptions import OutOfStock
-from allocation.service_layer import messagebus, unit_of_work, views
+from allocation.service_layer import views
 from allocation.service_layer.handlers import InvalidSku
 
 
@@ -17,7 +17,7 @@ bus = bootstrap.bootstrap()
 
 
 @app.post("/batch", status_code=status.HTTP_201_CREATED)
-def creat_batch(data=Body()) -> str:
+async def creat_batch(data=Body()) -> str:
     """
     api for creat_batch
     :param data:
@@ -38,7 +38,7 @@ def creat_batch(data=Body()) -> str:
 
 
 @app.post("/allocate", status_code=status.HTTP_201_CREATED)
-def allocate(data=Body()) -> dict:
+async def allocate(data=Body()) -> dict:
     """
     - api for allocate
     :param data:
@@ -59,7 +59,12 @@ def allocate(data=Body()) -> dict:
 
 
 @app.get("/allocations/", status_code=status.HTTP_202_ACCEPTED)
-def allocations_view_endpoint(orderid: str = Query()) -> dict:
+async def allocations_view_endpoint(orderid: str = Query()) -> dict:
+    """
+    - api for getting view table
+    :param orderid:
+    :return:
+    """
     result = views.allocations(orderid, bus.uow)
     if not result:
         return {"message": "not found","status_code":status.HTTP_404_NOT_FOUND}

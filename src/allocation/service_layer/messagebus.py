@@ -22,7 +22,7 @@ class MessageBus:
         self.event_handlers = event_handlers
         self.command_handlers = command_handlers
 
-    def handle(self, message: Message):
+    async def handle(self, message: Message):
         results = [] # results of command or list of events
         self.queue : deque[Message] = deque([message])
         while self.queue:
@@ -37,7 +37,7 @@ class MessageBus:
         return results
 
 
-    def handle_event(self, event: events.Event):
+    async def handle_event(self, event: events.Event):
         for handler in self.event_handlers[type(event)]:
             try:
                 logger.debug(f"Handling {event} with handler {handler}")
@@ -48,7 +48,7 @@ class MessageBus:
                 continue
 
 
-    def handle_command(self, command: commands.Command):
+    async def handle_command(self, command: commands.Command):
         logger.debug(f"Handling command {command}!")
         try:
             handler = self.command_handlers[type(command)]

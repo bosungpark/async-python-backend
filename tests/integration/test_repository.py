@@ -2,7 +2,7 @@ from allocation.domain import models
 from tests import fakes
 
 
-def test_get_by_batchref():
+async def test_get_by_batchref():
     repo = fakes.FakeProductRepository(products=[])
     b1 = models.Batch(ref="b1", sku="sku1", qty=100, eta=None)
     b2 = models.Batch(ref="b2", sku="sku1", qty=100, eta=None)
