@@ -10,8 +10,7 @@ client = TestClient(app)
 
 
 @pytest.mark.usefixtures("postgres_db")
-@pytest.mark.usefixtures("restart_api")
-async def test_api_returns_allocation(add_stock):
+async def test_api_returns_allocation():
     sku, othersku=random_refs.random_sku(), random_refs.random_sku("other")
     earlybatch= random_refs.random_batchref(1)
     laterbatch = random_refs.random_batchref(2)
@@ -29,8 +28,7 @@ async def test_api_returns_allocation(add_stock):
 
 
 @pytest.mark.usefixtures("postgres_db")
-@pytest.mark.usefixtures("restart_api")
-async def test_api_returns_are_persisted(add_stock):
+async def test_api_returns_are_persisted():
     sku=random_refs.random_sku()
     batch1, batch2 = random_refs.random_batchref(1), random_refs.random_batchref(2)
     order1, order2 = random_refs.random_orderid(1), random_refs.random_orderid(2)
@@ -51,8 +49,7 @@ async def test_api_returns_are_persisted(add_stock):
     assert r.json()["batchref"] == batch2
 
 
-@pytest.mark.usefixtures("restart_api")
-async def test_400_for_out_of_stock(add_stock):
+async def test_400_for_out_of_stock():
     sku, smalll_batch, large_order= random_refs.random_sku(), random_refs.random_batchref(), random_refs.random_orderid()
     api_client.post_to_add_batch(smalll_batch, sku, 10, None)
     data={"orderid": large_order, "sku": sku, "qty": 100}
@@ -64,8 +61,7 @@ async def test_400_for_out_of_stock(add_stock):
 
 
 @pytest.mark.usefixtures("postgres_db")
-@pytest.mark.usefixtures("restart_api")
-async def test_400_for_invalid_sku(add_stock):
+async def test_400_for_invalid_sku():
     unknown_sku, orderid= random_refs.random_sku(), random_refs.random_orderid()
     data={"orderid": orderid, "sku": unknown_sku, "qty": 100}
     url = config.get_api_url()

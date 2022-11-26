@@ -17,7 +17,7 @@ bus = bootstrap.bootstrap()
 
 
 @app.post("/batch", status_code=status.HTTP_201_CREATED)
-async def creat_batch(data=Body()) -> str:
+async def creat_batch(data=Body()) -> dict:
     """
     api for creat_batch
     :param data:
@@ -33,7 +33,7 @@ async def creat_batch(data=Body()) -> str:
         qty=data["qty"],
         eta=eta
     )
-    bus.handle(command)
+    await bus.handle(command)
     return {"message": "OK","status_code":status.HTTP_201_CREATED}
 
 
@@ -50,7 +50,7 @@ async def allocate(data=Body()) -> dict:
             sku=data["sku"],
             qty=data["qty"]
         )
-        results = bus.handle(command)
+        results = await bus.handle(command)
         batchref = results.pop(0)
     except (InvalidSku, OutOfStock) as e:
         return {"message": str(e),"status_code":status.HTTP_400_BAD_REQUEST}
@@ -65,7 +65,7 @@ async def allocations_view_endpoint(orderid: str = Query()) -> dict:
     :param orderid:
     :return:
     """
-    result = views.allocations(orderid, bus.uow)
+    result = await views.allocations(orderid, bus.uow)
     if not result:
         return {"message": "not found","status_code":status.HTTP_404_NOT_FOUND}
     return {"result" : result, "status_code":status.HTTP_202_ACCEPTED}

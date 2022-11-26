@@ -18,3 +18,4 @@ def get_redis_host_and_port():
     host = "127.0.0.1"
     port = 63791 if host == "localhost" else 6379
     return dict(host=host, port=port)
+
